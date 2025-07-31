@@ -70,6 +70,10 @@ udp_server::udp_server(stream_info_impl_p info, asio::io_context &io, ip::addres
 		bool joined_anywhere = false;
 		asio::error_code err;
 		for (auto &if_ : api_config::get_instance()->multicast_interfaces) {
+			if (if_.addr.is_loopback()) {
+				DLOG_F(INFO, "Skipping loopback interface %s", if_.addr.to_string().c_str());
+				continue;
+			}
 			DLOG_F(
 				INFO, "Joining %s to %s", if_.addr.to_string().c_str(), addr.to_string().c_str());
 			if (addr.is_v4() && if_.addr.is_v4())
