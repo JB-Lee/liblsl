@@ -175,9 +175,17 @@ void udp_server::handle_receive_outcome(err_t err, std::size_t len) {
 	DLOG_F(6, "udp_server::handle_receive_outcome (%lub)", len);
 	if (err) {
 		// non-critical error? Wait for the next packet
-		if (err != asio::error::operation_aborted || err != asio::error::shut_down)
-			request_next_packet();
-		return;
+		switch (err.value()) {
+			case asio::error::operation_aborted:
+			case asio::error::shut_down:
+			case asio::error::bad_descriptor:
+			case asio::error::no_buffer_space:
+			case asio::error::fault:
+				return;
+			default:
+				request_next_packet();
+				return;
+			}
 	}
 	try {
 		// remember the time of packet reception for possible later use
