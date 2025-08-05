@@ -70,8 +70,10 @@ TEMPLATE_TEST_CASE("pushpull", "[basic][throughput]", char, double, std::string)
 			};
 
 			for (auto &inlet : inlet_list) inlet.close_stream();
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			inlet_list.clear();
 		}
+
 	}
 }
 
