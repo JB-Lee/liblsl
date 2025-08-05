@@ -13,7 +13,18 @@ template <typename T> struct sample_value { static const T val; };
 template <> const char sample_value<char>::val = 122;
 template <> const int64_t sample_value<int64_t>::val = 1LL << 62;
 template <> const double sample_value<double>::val = 17324412.552;
-template <> const std::string sample_value<std::string>::val(100, 'a');
+// template <> const std::string sample_value<std::string>::val(100, 'a');
+
+// if 32bit, we need to use a smaller string to avoid bad_alloc error
+template <> const std::string sample_value<std::string>::val = []() {
+#if defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 4
+	// 32bit
+	return std::string(10, 'a');
+#else
+	// 64bit
+	return std::string(200, 'a');
+#endif
+}();
 
 
 TEMPLATE_TEST_CASE("pushpull", "[basic][throughput]", char, double, std::string) {
