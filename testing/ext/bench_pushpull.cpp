@@ -69,20 +69,8 @@ TEMPLATE_TEST_CASE("pushpull", "[basic][throughput]", char, double, std::string)
 				for (auto &inlet : inlet_list) inlet.flush();
 			};
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-			for (auto &inlet : inlet_list) {
-				inlet.flush();
-				inlet.close_stream();
-			}
-
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			inlet_list.clear();
-		}
-
-		for (int i=0; i < 10; ++i) {
-			if (!out.have_consumers()) break;
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
 	}
