@@ -591,6 +591,7 @@ void client_session::transfer_samples_thread(std::shared_ptr<client_session> /* 
 			}
 		} catch (std::exception &e) {
 			LOG_F(WARNING, "Unexpected glitch in transfer_samples_thread: %s", e.what());
+			LOG_F(WARNING, "Buffer size: %zu", feedbuf_.size());
 		}
 	}
 }
