@@ -13,18 +13,7 @@ template <typename T> struct sample_value { static const T val; };
 template <> const char sample_value<char>::val = 122;
 template <> const int64_t sample_value<int64_t>::val = 1LL << 62;
 template <> const double sample_value<double>::val = 17324412.552;
-// template <> const std::string sample_value<std::string>::val(100, 'a');
-
-// if 32bit, we need to use a smaller string to avoid bad_alloc error
-template <> const std::string sample_value<std::string>::val = []() {
-#if defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 4
-	// 32bit
-	return std::string(10, 'a');
-#else
-	// 64bit
-	return std::string(200, 'a');
-#endif
-}();
+template <> const std::string sample_value<std::string>::val(200, 'a');
 
 
 TEMPLATE_TEST_CASE("pushpull", "[basic][throughput]", char, double, std::string) {
@@ -69,19 +58,20 @@ TEMPLATE_TEST_CASE("pushpull", "[basic][throughput]", char, double, std::string)
 			}
 
 			std::string suffix(std::to_string(nchan) + "_inlets_" + std::to_string(n_inlets));
+			std::vector<TestType> sample_buffer(nchan * chunk_size);
 
-			BENCHMARK("push_sample_nchan_" + suffix) {
-				for (size_t s = 0; s < chunk_size; s++) out.push_sample(static_cast<const TestType*>(sample_data.data()));
-				for (auto &inlet : inlet_list) inlet.flush();
+
+			BENCHMARK("pushpull_sample_nchan_" + suffix) {
+				for (size_t s = 0; s < chunk_size; s++) out.push_sample(sample_data.data());
+				for (auto &inlet : inlet_list) inlet.pull_chunk_multiplexed(sample_buffer.data(), nullptr, sample_buffer.size(), 0, 10.0);
 			};
 
-			BENCHMARK("push_chunk_nchan_" + suffix) {
-				out.push_chunk_multiplexed(static_cast<const TestType*>(chunk_data.data()), nchan * chunk_size);
-				for (auto &inlet : inlet_list) inlet.flush();
+			BENCHMARK("pushpull_chunk_nchan_" + suffix) {
+				out.push_chunk_multiplexed(chunk_data.data(), nchan * chunk_size);
+				for (auto &inlet : inlet_list) inlet.pull_chunk_multiplexed(sample_buffer.data(), nullptr, sample_buffer.size(), 0, 10.0);
 			};
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			inlet_list.clear();
+
 		}
 
 	}
