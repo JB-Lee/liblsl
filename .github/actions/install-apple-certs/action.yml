@@ -17,10 +17,13 @@ runs:
       run: |
         # Create temporary keychain
         KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
-        security create-keychain -p "${{ inputs.MACOS_CI_KEYCHAIN_PWD }}" $KEYCHAIN_PATH
-        security default-keychain -s $KEYCHAIN_PATH
-        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-        security unlock-keychain -p "${{ inputs.MACOS_CI_KEYCHAIN_PWD }}" $KEYCHAIN_PATH
+        KEYCHAIN_PWD="${{ inputs.MACOS_CI_KEYCHAIN_PWD }}"
+        CERT_PWD="${{ inputs.MACOS_CERTIFICATE_PWD }}"
+
+        security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+        security default-keychain -s "$KEYCHAIN_PATH"
+        security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+        security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
 
         # Import certificates from secrets ...
         CERTIFICATE_PATH_APP=$RUNNER_TEMP/build_certificate_app.p12
