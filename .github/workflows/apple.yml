@@ -33,6 +33,7 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    environment: Apple_CI
     strategy:
       fail-fast: false
       matrix:
@@ -222,7 +223,7 @@ jobs:
             -framework build-iOS/Frameworks/lsl.framework \
             -framework build-iOS-Simulator/Frameworks/lsl.framework \
             -output lsl.xcframework
-          
+
           codesign -vvv --force --deep --sign "$APPLE_CODE_SIGN_IDENTITY_APP" lsl.xcframework
           echo "✅ Verifying binary signatures in XCFramework..."
           codesign -vvv --verify --deep --strict lsl.xcframework
