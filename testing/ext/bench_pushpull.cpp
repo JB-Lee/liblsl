@@ -21,9 +21,6 @@ TEMPLATE_TEST_CASE("pushpull", "[basic][throughput]", char, double, std::string)
 	const std::size_t param_nchan[] = {1, max_nchan};
 	const std::size_t param_inlets[] = {0, 1, 10};
 
-	// const TestType data[max_nchan * chunk_size] = {sample_value<TestType>::val};
-	// TestType data[max_nchan * chunk_size];
-	// std::fill(data, data + (max_nchan * chunk_size), sample_value<TestType>::val);
 
 	const char *name = SampleType<TestType>::fmt_string();
 	lsl::channel_format_t cf = (lsl::channel_format_t)SampleType<TestType>::chan_fmt;
@@ -34,43 +31,34 @@ TEMPLATE_TEST_CASE("pushpull", "[basic][throughput]", char, double, std::string)
 		auto found_stream_info(lsl::resolve_stream("name", name, 1, 2.0));
 		REQUIRE(!found_stream_info.empty());
 
-		// TestType sample_data[nchan];
-		// std::fill(sample_data, sample_data + nchan, sample_value<TestType>::val);
-
-		// TestType chunk_data[nchan * chunk_size];
-		// std::fill(chunk_data, chunk_data + (nchan * chunk_size), sample_value<TestType>::val);
+		std::list<std::unique_ptr<lsl::stream_inlet>> inlet_list;
 
 		std::vector<TestType> sample_data(nchan, sample_value<TestType>::val);
 		std::vector<TestType> chunk_data(nchan * chunk_size, sample_value<TestType>::val);
+		std::vector<TestType> sample_buffer(nchan * chunk_size);
 
-		// std::list<lsl::stream_inlet> inlet_list;
 		for (auto n_inlets : param_inlets) {
-			std::list<lsl::stream_inlet> inlet_list;
-
-			// while (inlet_list.size() < n_inlets) {
-			// 	inlet_list.emplace_front(found_stream_info[0], 300, false);
-			// 	inlet_list.front().open_stream(.5);
-			// }
 
 			for (std::size_t i=0; i < n_inlets; ++i) {
-				inlet_list.emplace_back(found_stream_info[0], 300, false);
-				inlet_list.back().open_stream(.5);
+				auto inlet = std::make_unique<lsl::stream_inlet>(found_stream_info[0], 300, false);
+				inlet->open_stream(.5);
+				inlet_list.push_back(std::move(inlet));
 			}
 
 			std::string suffix(std::to_string(nchan) + "_inlets_" + std::to_string(n_inlets));
-			std::vector<TestType> sample_buffer(nchan * chunk_size);
 
 
 			BENCHMARK("pushpull_sample_nchan_" + suffix) {
 				for (size_t s = 0; s < chunk_size; s++) out.push_sample(sample_data.data());
-				for (auto &inlet : inlet_list) inlet.pull_chunk_multiplexed(sample_buffer.data(), nullptr, sample_buffer.size(), 0, 10.0);
+				for (auto &inlet : inlet_list) inlet->pull_chunk_multiplexed(sample_buffer.data(), nullptr, sample_buffer.size(), 0, 10.0);
 			};
 
 			BENCHMARK("pushpull_chunk_nchan_" + suffix) {
 				out.push_chunk_multiplexed(chunk_data.data(), nchan * chunk_size);
-				for (auto &inlet : inlet_list) inlet.pull_chunk_multiplexed(sample_buffer.data(), nullptr, sample_buffer.size(), 0, 10.0);
+				for (auto &inlet : inlet_list) inlet->pull_chunk_multiplexed(sample_buffer.data(), nullptr, sample_buffer.size(), 0, 10.0);
 			};
 
+			inlet_list.clear();
 
 		}
 
