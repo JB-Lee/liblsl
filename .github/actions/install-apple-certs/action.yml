@@ -18,7 +18,7 @@ runs:
         # Create temporary keychain
         KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
         KEYCHAIN_PWD="${{ inputs.MACOS_CI_KEYCHAIN_PWD }}"
-        CERT_PWD="${{ inputs.MACOS_CERTIFICATE_PWD }}"
+        CERT_PWD='${{ inputs.MACOS_CERTIFICATE_PWD }}'
 
         security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
         security default-keychain -s "$KEYCHAIN_PATH"
@@ -31,8 +31,8 @@ runs:
         echo -n "${{ inputs.MACOS_CERTIFICATE_APP }}" | base64 --decode -o $CERTIFICATE_PATH_APP
         echo -n "${{ inputs.MACOS_CERTIFICATE_INST }}" | base64 --decode -o $CERTIFICATE_PATH_INST
         # ... to keychain
-        security import $CERTIFICATE_PATH_APP -P "${{ inputs.MACOS_CERTIFICATE_PWD }}" -k $KEYCHAIN_PATH -A -t cert -f pkcs12
-        security import $CERTIFICATE_PATH_INST -P "${{ inputs.MACOS_CERTIFICATE_PWD }}" -k $KEYCHAIN_PATH -A -t cert -f pkcs12
+        security import $CERTIFICATE_PATH_APP -P $CERT_PWD -k $KEYCHAIN_PATH -A -t cert -f pkcs12
+        security import $CERTIFICATE_PATH_INST -P $CERT_PWD -k $KEYCHAIN_PATH -A -t cert -f pkcs12
 
         # Set trusted partitions (groups of applications) that can access the keychain items
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ inputs.MACOS_CI_KEYCHAIN_PWD }}" $KEYCHAIN_PATH
